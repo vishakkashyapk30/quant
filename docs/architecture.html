@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<!-- Source for docs/architecture.png. Regenerate with:
+     google-chrome --headless --screenshot=docs/architecture.png \
+       --window-size=1560,840 --force-device-scale-factor=2 \
+       --default-background-color=00000000 docs/architecture.html -->
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { background: transparent; }
+  body {
+    font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    width: 1560px; height: 840px;
+  }
+  .canvas {
+    position: absolute; left: 20px; top: 20px;
+    width: 1520px; height: 800px;
+    background: #0d1117;
+    border: 1px solid #30363d;
+    border-radius: 16px;
+    position: relative;
+    overflow: hidden;
+  }
+  .title {
+    position: absolute; top: 28px; left: 0; right: 0;
+    text-align: center;
+    color: #e6edf3; font-size: 26px; font-weight: 700; letter-spacing: 0.5px;
+  }
+  .subtitle {
+    position: absolute; top: 64px; left: 0; right: 0;
+    text-align: center;
+    color: #8b949e; font-size: 14px;
+  }
+  .box {
+    position: absolute;
+    border-radius: 12px;
+    border: 1.5px solid;
+    padding: 14px 16px;
+  }
+  .box h3 { font-size: 17px; font-weight: 700; margin-bottom: 3px; }
+  .box .sub { font-size: 12px; line-height: 1.45; }
+  .thread-tag {
+    display: inline-block; font-size: 10px; font-weight: 700;
+    letter-spacing: 0.8px; text-transform: uppercase;
+    padding: 2px 8px; border-radius: 999px; margin-bottom: 8px;
+  }
+  .sim   { background: #10233a; border-color: #1f6feb; }
+  .sim h3, .sim .sub b { color: #79c0ff; } .sim .sub { color: #a5c9e8; }
+  .sim .thread-tag { background: #1f6feb33; color: #79c0ff; }
+  .rx    { background: #14261a; border-color: #2ea043; }
+  .rx h3, .rx .sub b { color: #7ee787; } .rx .sub { color: #a8d5b0; }
+  .rx .thread-tag { background: #2ea04333; color: #7ee787; }
+  .eng   { background: #2b2111; border-color: #d29922; }
+  .eng h3, .eng .sub b { color: #e3b341; } .eng .sub { color: #d8c49a; }
+  .eng .thread-tag { background: #d2992233; color: #e3b341; }
+  .mon   { background: #2a1a2e; border-color: #a371f7; }
+  .mon h3, .mon .sub b { color: #d2a8ff; } .mon .sub { color: #c8b1dd; }
+  .mon .thread-tag { background: #a371f733; color: #d2a8ff; }
+  .chips { margin-top: 8px; display: flex; flex-wrap: wrap; gap: 5px; }
+  .chip {
+    font-size: 11px; font-weight: 600; padding: 3px 9px;
+    border-radius: 999px; border: 1px solid #2ea04366;
+    color: #7ee787; background: #2ea04314;
+  }
+  .ring {
+    position: absolute; height: 34px;
+    border-radius: 999px;
+    background: #1c2128; border: 1.5px dashed #8b949e;
+    color: #e6edf3; font-size: 12px; font-weight: 600;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .edge-label {
+    position: absolute;
+    color: #8b949e; font-size: 11.5px; line-height: 1.4; text-align: center;
+  }
+  svg.wires { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .footnote {
+    position: absolute; bottom: 20px; left: 0; right: 0; text-align: center;
+    color: #8b949e; font-size: 12.5px;
+  }
+  .footnote b { color: #e6edf3; }
+</style>
+</head>
+<body>
+<div class="canvas">
+  <div class="title">latency-lab &mdash; C++20 market data pipeline &amp; matching engine</div>
+  <div class="subtitle">single-writer principle end to end: every structure has exactly one mutating thread &mdash; no locks anywhere</div>
+
+  <svg class="wires" viewBox="0 0 1520 800">
+    <defs>
+      <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+        <path d="M 0 0 L 10 5 L 0 10 z" fill="#8b949e"/>
+      </marker>
+    </defs>
+    <!-- sim -> feed handler -->
+    <line x1="320" y1="330" x2="418" y2="330" stroke="#8b949e" stroke-width="2" marker-end="url(#arr)"/>
+    <!-- feed handler -> rings -->
+    <line x1="700" y1="300" x2="768" y2="212" stroke="#8b949e" stroke-width="2" marker-end="url(#arr)"/>
+    <line x1="700" y1="330" x2="768" y2="330" stroke="#8b949e" stroke-width="2" marker-end="url(#arr)"/>
+    <line x1="700" y1="360" x2="768" y2="448" stroke="#8b949e" stroke-width="2" marker-end="url(#arr)"/>
+    <!-- rings -> engines -->
+    <line x1="984" y1="195" x2="1050" y2="195" stroke="#8b949e" stroke-width="2" marker-end="url(#arr)"/>
+    <line x1="984" y1="330" x2="1050" y2="330" stroke="#8b949e" stroke-width="2" marker-end="url(#arr)"/>
+    <line x1="984" y1="465" x2="1050" y2="465" stroke="#8b949e" stroke-width="2" marker-end="url(#arr)"/>
+    <!-- engines -> monitor (histograms merged after run) -->
+    <path d="M 1340 200 C 1445 235, 1455 500, 1400 594" fill="none" stroke="#8b949e" stroke-width="2" marker-end="url(#arr)"/>
+    <path d="M 1195 505 C 1200 540, 1215 565, 1238 594" fill="none" stroke="#8b949e" stroke-width="2" marker-end="url(#arr)"/>
+  </svg>
+
+  <div class="box sim" style="left:60px; top:255px; width:260px;">
+    <div class="thread-tag">process &middot; exchange_sim</div>
+    <h3>Exchange Simulator</h3>
+    <div class="sub">
+      Synthetic multi-symbol order flow (add / cancel / modify), seeded &amp;
+      deterministic, random-walk mids, paced to a target rate with send-side
+      <b>CLOCK_MONOTONIC</b> timestamps.
+    </div>
+  </div>
+
+  <div class="edge-label" style="left:308px; top:283px; width:122px;">
+    UDP datagrams<br>40-B <b style="color:#e6edf3">wire::Msg</b> &times; &le;32
+  </div>
+
+  <div class="box rx" style="left:425px; top:228px; width:275px;">
+    <div class="thread-tag">thread 0 &middot; pinned</div>
+    <h3>Feed Handler</h3>
+    <div class="sub">
+      Zero-copy parse (<b>reinterpret_cast</b>, no heap), sequence-gap
+      detection, routes by <b>symbol % N</b>.
+    </div>
+    <div class="chips">
+      <span class="chip">epoll</span><span class="chip">busy-poll</span>
+      <span class="chip">recvmmsg</span><span class="chip">io_uring multishot</span>
+    </div>
+  </div>
+
+  <div class="ring" style="left:775px; top:178px; width:205px;">lock-free SPSC ring #0</div>
+  <div class="ring" style="left:775px; top:313px; width:205px;">lock-free SPSC ring #1</div>
+  <div class="ring" style="left:775px; top:448px; width:205px;">lock-free SPSC ring #N</div>
+  <div class="edge-label" style="left:775px; top:395px; width:205px;">cache-line aligned &middot; acquire/release only</div>
+
+  <div class="box eng" style="left:1055px; top:140px; width:275px; padding:12px 16px;">
+    <div class="thread-tag">thread 1 &middot; pinned</div>
+    <h3 style="font-size:15px;">Engine shard 0</h3>
+    <div class="sub">per-symbol order book + matcher</div>
+  </div>
+  <div class="box eng" style="left:1055px; top:272px; width:275px;">
+    <div class="thread-tag">thread 2 &middot; pinned</div>
+    <h3 style="font-size:15px;">Engine shard 1</h3>
+    <div class="sub">
+      Flat price-level vector &middot; intrusive FIFOs &middot; slab pools
+      (opt. <b>2 MiB huge pages</b>) &middot; open-addressing order-id map &middot;
+      price-time priority, deterministic replay
+    </div>
+  </div>
+  <div class="box eng" style="left:1055px; top:428px; width:275px; padding:12px 16px;">
+    <div class="thread-tag">thread N+1 &middot; pinned</div>
+    <h3 style="font-size:15px;">Engine shard N</h3>
+    <div class="sub">zero heap allocation on the hot path</div>
+  </div>
+
+  <div class="box mon" style="left:1150px; top:600px; width:310px; padding:12px 16px;">
+    <div class="thread-tag">cold path</div>
+    <h3 style="font-size:15px;">Latency Monitor</h3>
+    <div class="sub">
+      per-stage HDR histograms (16 KiB, &le;3% error), merged after run:
+      <b>p50 / p99 / p99.9 / max</b>
+    </div>
+  </div>
+
+  <div class="footnote">
+    measured on loopback, 16-core Linux 6.14: <b>1M msg/s</b> sustained, <b>0</b> gaps / <b>0</b> drops &middot;
+    wire&rarr;engine p50 <b>3.8 &micro;s</b> (busy-poll) &middot; match p50 <b>184 ns</b> &middot;
+    book ops <b>7.5&times;</b> faster than std::map
+  </div>
+</div>
+</body>
+</html>
